@@ -8,8 +8,256 @@ import tkinter.messagebox as tmsg
 import re
 import os
 
+# Global Registers
+R1 = "0x00000000"
+R2 = "0x00000000"
+R3 = "0x00000000" # For addition
+R4 = "0x00000000" # For Subtraction
+R5 = "0x00000000" # For And/Or operation
 
-# main function
+# Flags
+V = 0 # Overflow flag
+C = 0 # Carry flag
+Z = 0 # Zero flag
+N = 0 # Negative flag
+
+# Function to complement a value
+def comp(x):
+    x_ = ""
+    for i in range(len(x)):
+        if x[i].upper() == '1': 
+            x_ += 'E'
+        elif x[i].upper() == '0':
+            x_ += 'F'
+        elif x[i].upper() == '2':
+            x_ += 'D'
+        elif x[i].upper() == '3':
+            x_ += 'C'
+        elif x[i].upper() == '4':
+            x_ += 'B'
+        elif x[i].upper() == '5':
+            x_ += 'A'
+        elif x[i].upper() == '6':
+            x_ += '9'
+        elif x[i].upper() == '7':
+            x_ += '8'
+        elif x[i].upper() == '8':
+            x_ += '7'
+        elif x[i].upper() == '9':
+            x_ += '6'
+        elif x[i].upper() == 'A':
+            x_ += '5'
+        elif x[i].upper() == 'B':
+            x_ += '4'
+        elif x[i].upper() == 'C':
+            x_ += '3'
+        elif x[i].upper() == 'D':
+            x_ += '2'
+        elif x[i].upper() == 'E':
+            x_ += '1'
+        elif x[i].upper() == 'F':
+            x_ += '0'
+    return "0x" + x_
+
+# Function to compute the logical Or operation on two values.
+def logicalOr(x, y):
+    # x = 01010011
+    # y = 11011001
+    x_ = ""
+    a = len(x)
+    b = len(y)
+    if a>b:
+        l = a
+    else:
+        l = b
+    for i in range(l):
+        if x[i]=='0' and y[i] == '0':
+            x_ += '0'
+        elif x[i]=='0' and y[i]=='1':
+            x_ += '1'
+        elif x[i]=='1' and y[i]=='1':
+            x_ += '1'
+        elif x[i]=='1' and y[i]=='0':
+            x_ += '1'
+    return x_
+
+# Function to compute the logical And operation on two values.
+def logicalAnd(x, y):
+    x_ = ""
+    a = len(x)
+    b = len(y)
+    if a>b:
+        l = a
+    else:
+        l = b
+    for i in range(l):
+        if x[i]=='1' and y[i] == '1':
+            x_ += '1'
+        else:
+            x_ += '0'
+    return x_
+
+
+# Function to compute the logical Xor operation on two values.
+def logicalXor(x, y):
+    x_ = ""
+    for i in range(len(x)):
+        if (x[i]=='0' and y[i] == '0') or (x[i]=='1' and y[i]=='1'):
+            x_ += '0'
+        else:
+            x_ += '1'
+    return x_
+
+
+# Function to mov value to a register (R1 or R2 or R3)
+# mov R1, value
+def mov(x, y):
+    global R1
+    global R2
+    global R3
+    if x == "R1":
+        R1 = y[1:]
+    elif x == "R2":
+        R2 = y[1:]
+    elif R3 == "R3":
+        R3 = y[1:]
+
+# Function to mov the complement of the value to the given register (R1 or R2 or R3)
+# mvn R1, value
+def mvn(x, y):
+    global R1
+    global R2
+    global R3
+    if x == "R1":
+        R1 = comp(y[3:])
+    elif x == "R2":
+        R2 = comp(y[3:])
+    elif R3 == "R3":
+        R3 == comp(y[3:])
+
+# Function to execute the add instruction (Addition)
+# add R3, R1, R2
+def add(x1, x2, x3):
+    global R1
+    global R2
+    global R3
+    global R4
+    if x1 == "R3":
+        R3 = hex(int(R1, 16) + int(R2, 16))
+    
+# Function to execute the sub instruction (Subtraction)
+# sub R3, R1, R2
+def sub(x1, x2, x3):
+    global R1
+    global R2
+    global R3
+    global R4
+    if x1 == "R4":
+        R4 = hex(int(R1, 16) - int(R2, 16))
+
+# Function to execute the rsb instruction (Reverse Subtraction) 
+# sub R3, R1, R2
+def rsb(x1, x2, x3):
+    global R1
+    global R2
+    global R3
+    global R4
+    if x1 == "R4":
+        R4 = hex(int(R2, 16) - int(R1, 16))
+
+# Function to execute the And operation 
+# And R5, R1, R2
+def And(x1, x2):
+    global R1
+    global R2
+    global R3
+    global R4
+    global R5
+    R5 = hex(int(R1, 16) & int(R2, 16))
+
+# Function to execute the Or operation
+# Orr R5, R1, R2
+def orr(x1, x2):
+    global R1
+    global R2
+    global R3
+    global R4
+    global R5
+    R5 = hex(int(R1, 16) | int(R2, 16))
+    
+# Function to execute the Eor operation
+# Eor R5, R1, R2
+def eor(x1, x2):
+    global R1
+    global R2
+    global R3
+    global R4
+    global R5
+    R5 = hex(int(R1, 16) ^ int(R2, 16))
+
+# Function to execute the BIC instruction (And with complement)
+# bic R5, R1, R2
+def bic(x1, x2):
+    global R1
+    global R2
+    global R3
+    global R4
+    global R5
+    temp = hex(~(int(R2, 16)))
+    # temp = comp(R2)
+    # print(temp)
+    R5 = hex(int(R1, 16) & int(temp, 16))
+
+# Function for CMP instruction (Compare)
+# cmp R1, R2
+def cmp(x, y):
+    global Z
+    global N
+    temp = int(x, 16) - int(y, 16)
+    if temp == 0:
+        Z = 1
+        N = 0
+    elif temp < 0:
+        Z = 0
+        N = 1
+    elif temp > 0:
+        Z = 0
+        N = 0
+
+# Function to parse the instruction set and see which operation to perform
+def parse(instruction_set):
+    for i in instruction_set:
+        instruction_set_list = re.split(" |, |\(|\)", i)
+        instruction = []
+        for i in instruction_set_list:
+            if i != "":
+                instruction.append(i)
+        if len(instruction) == 0:
+            continue
+        if len(instruction) == 1:
+            tmsg.showinfo("Error Encountered!!", textArea.get(1.0, END))
+        if instruction[0].upper() == "MOV" and len(instruction) == 3:
+            mov(instruction[1], instruction[2])
+        elif instruction[0].upper() == "MVN" and len(instruction) == 3:
+            mvn(instruction[1], instruction[2])
+        elif instruction[0].upper() == "ADD" and len(instruction) == 4:
+            add(instruction[1], instruction[2], instruction[3])
+        elif instruction[0].upper() == "SUB" and len(instruction) == 4:
+            sub(instruction[1], instruction[2], instruction[3])
+        elif instruction[0].upper() == "RSB" and len(instruction) == 4:
+            rsb(instruction[1], instruction[2], instruction[3])
+        elif instruction[0].upper() == "AND" and len(instruction) == 4:
+            And(instruction[2], instruction[3], )
+        elif instruction[0].upper() == "ORR" and len(instruction) == 4:
+            orr(instruction[2], instruction[3])
+        elif instruction[0].upper() == "EOR" and len(instruction) == 4:
+            eor(instruction[2], instruction[3])
+        elif instruction[0].upper() == "BIC" and len(instruction) == 4:
+            bic(instruction[2], instruction[3])
+        elif instruction[0].upper() == "CMP" and len(instruction) == 3:
+            bic(instruction[1], instruction[2])
+
+
 # create a new file
 def newFile():
     global File
@@ -209,8 +457,32 @@ def flagInstr():
 
 
 # assemble the code and check the result
+# def assemble():
+#     tmsg.showinfo("Result", textArea.get(1.0, END))
+
 def assemble():
-    tmsg.showinfo("Result", textArea.get(1.0, END))
+    res = Toplevel()
+    res.geometry("600x350")
+    res.title("Result")
+    headerFrame = Frame(res)
+    headerFrame.pack(fill=X)
+    resFrame = Frame(res)
+    resFrame.pack(fill=X)
+    instr_lines = textArea.get(1.0, END).splitlines()
+    for i in range(len(instr_lines)):
+        parse(instr_lines)
+    Label(headerFrame, text="Register And Flag Values", font="firacode 20 underline").pack()
+    Label(resFrame, text="\nR1 = {r1}".format(r1 = R1), font="firacode 16", justify=LEFT, anchor="w").grid(sticky=W, column=0, row=1)
+    Label(resFrame, text="R2 = {r2}".format(r2 = R2), font="firacode 16", justify=LEFT, anchor="w").grid(sticky=W, column=0, row=2)
+    Label(resFrame, text="R3 = {r3}".format(r3 = R3), font="firacode 16", justify=LEFT, anchor="w").grid(sticky=W, column=0, row=3)
+    Label(resFrame, text="R4 = {r4}".format(r4 = R4), font="firacode 16", justify=LEFT, anchor="w").grid(sticky=W, column=0, row=4)
+    Label(resFrame, text="R5 = {r5}".format(r5 = R5), font="firacode 16", justify=LEFT, anchor="w").grid(sticky=W, column=0, row=5)
+    Label(resFrame, text="V = {v}".format(v = V), font="firacode 16", justify=LEFT, anchor="w").grid(sticky=W, column=0, row=6)
+    Label(resFrame, text="C = {c}".format(c = C), font="firacode 16", justify=LEFT, anchor="w").grid(sticky=W, column=0, row=7)
+    Label(resFrame, text="Z = {z}".format(z = Z), font="firacode 16", justify=LEFT, anchor="w").grid(sticky=W, column=0, row=8)
+    Label(resFrame, text="N = {n}".format(n = N), font="firacode 16", justify=LEFT, anchor="w").grid(sticky=W, column=0, row=9)
+    #print(R1, R2, R3, R4, R5)
+    # tmsg.showinfo("Result", n)
 
 # About page
 def about():
@@ -262,8 +534,8 @@ if __name__ == '__main__':
     
     # Adding the remaining menus directly as they dont have any submenu
     mymenu.add_command(label="Assemble", command=assemble)
-    mymenu.add_command(label="Quit", command=quit)
     mymenu.add_command(label="About", command=about)
+    mymenu.add_command(label="Quit", command=quit)
     root.config(menu=mymenu)
 
     # Adding a scrollbar
