@@ -480,7 +480,7 @@ def assemble():
 
 # About page
 def about():
-    tmsg.showinfo("ARM ASSEMBLER", "An Arm7 Assembler by Aftaab Siddiqui (18BEC004) & Nishit Chechani (18BEC065)")
+    tmsg.showinfo("ARM ASSEMBLER", "An Arm7 Assembler by Aftaab Siddiqui")
  
 
 if __name__ == '__main__':
